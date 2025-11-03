@@ -416,3 +416,6 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+FinalProject/FinalProject/glew32.dll
+FinalProject/FinalProject/glfw3.dll
