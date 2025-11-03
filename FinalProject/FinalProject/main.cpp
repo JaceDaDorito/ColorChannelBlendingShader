@@ -31,7 +31,8 @@ const float FOV = 75;
 //View
 const float EYE_DISTANCE_FROM_POT = 3;
 
-const float SPEED_COEFF = 1;
+const float SPEED_COEFF = 0;
+const float SPEED_COEFF_ROTATION = 2;
 
 const float BG_RED = 0.3;
 const float BG_GREEN = 0.3;
@@ -263,7 +264,7 @@ int main(void) {
     std::cout << "GLFW initialized" << std::endl;
 
     //Create a window and OpenGL context
-    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Assignment 6: Jason Torres", NULL, NULL);
+    window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Final Project: Jason Torres", NULL, NULL);
     //If window failed to create, terminate and return;
     if (!window) {
         glfwTerminate();
@@ -283,7 +284,7 @@ int main(void) {
     std::cout << "OpenGL version: " << glGetString(GL_VERSION) << "\n" << std::endl;
     
 
-    ShaderProgramSource sources = ParseShader("shader.shader");
+    ShaderProgramSource sources = ParseShader("channeltextureblend.shader");
     std::cout << "VERTEX" << std::endl;
     std::cout << sources.VertexSource << std::endl;
     std::cout << "FRAGMENT" << std::endl;
@@ -305,7 +306,7 @@ int main(void) {
     glm::mat4 projMatrix = glm::perspective((float)glm::radians(FOV), aspect, near, far);
 
     //View
-    glm::vec3 initEyePos = glm::normalize(glm::vec3(1.0, 0.0, 1.0)) * EYE_DISTANCE_FROM_POT;
+    glm::vec3 initEyePos = glm::normalize(glm::vec3(1.0, 1.0, 1.0)) * EYE_DISTANCE_FROM_POT;
 
     //Texture
 
@@ -344,19 +345,32 @@ int main(void) {
                         -modelObject.bounds[i].center
                     );
 
+                    glm::mat4 rotationMatrix = glm::rotate(
+                        glm::mat4(1.0f),
+                        (float)(now * SPEED_COEFF_ROTATION),
+                        glm::vec3(1.0f,0.0f,1.0f)
+                    );
+
                     glm::mat4 scaleMatrix = glm::scale(
                         glm::mat4(1.0f),
                         glm::vec3(1.0f / (modelObject.bounds[i].dia/2))
                     );
 
-                    glm::mat4 modelMatrix = scaleMatrix * transMatrix;
-
                     GLint matrixPLocation = glGetUniformLocation(ShaderProgram, "P");
                     GLint matrixVLocation = glGetUniformLocation(ShaderProgram, "V");
-                    GLint matrixMLocation = glGetUniformLocation(ShaderProgram, "M");
+
+                    GLint matrixTLocation = glGetUniformLocation(ShaderProgram, "T");
+                    GLint matrixRLocation = glGetUniformLocation(ShaderProgram, "R");
+                    GLint matrixSLocation = glGetUniformLocation(ShaderProgram, "S");
+
                     glUniformMatrix4fv(matrixPLocation, 1, GL_FALSE, glm::value_ptr(projMatrix));
                     glUniformMatrix4fv(matrixVLocation, 1, GL_FALSE, glm::value_ptr(viewMatrix));
-                    glUniformMatrix4fv(matrixMLocation, 1, GL_FALSE, glm::value_ptr(modelMatrix));
+
+                    glUniformMatrix4fv(matrixTLocation, 1, GL_FALSE, glm::value_ptr(transMatrix));
+                    glUniformMatrix4fv(matrixRLocation, 1, GL_FALSE, glm::value_ptr(rotationMatrix));
+                    glUniformMatrix4fv(matrixSLocation, 1, GL_FALSE, glm::value_ptr(scaleMatrix));
+
+
                     glBindVertexArray(modelObject.vaos[i]);
                     glDrawArrays(GL_TRIANGLES, 0, meshes[i].Vertices.size());
                 }

@@ -133,7 +133,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="shader.shader" />
+    <None Include="channeltextureblend.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h" />
