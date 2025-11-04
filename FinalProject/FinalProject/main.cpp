@@ -32,7 +32,7 @@ const float FOV = 75;
 const float EYE_DISTANCE_FROM_POT = 3;
 
 const float SPEED_COEFF = 0;
-const float SPEED_COEFF_ROTATION = 0;
+const float SPEED_COEFF_ROTATION = 2;
 
 const float BG_RED = 0.3;
 const float BG_GREEN = 0.3;

@@ -45,8 +45,8 @@ uniform sampler2D texBlue;
 
 out vec4 outColor; // User-defined output variable for fragment color
 
-vec3 saturate(vec3 input){
-    return clamp(input, 0, 1);
+vec3 saturate(vec3 inputVec){
+    return clamp(inputVec, 0, 1);
 }
 
 void main () {
