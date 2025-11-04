@@ -10,7 +10,7 @@ uniform mat4 T;
 uniform mat4 R;
 uniform mat4 S;
 
-
+out vec4 w_pos;
 out vec3 f_normal;
 out vec3 w_normal;
 
@@ -21,7 +21,8 @@ void main() {
     f_normal = normal;
     w_normal = (transpose(inverse(R)) * vec4(normal, 1.0)).xyz;
 
-    gl_Position = P * V * M * vec4(position, 1.0);
+    w_pos = M * vec4(position, 1.0);
+    gl_Position = P * V * w_pos;
 }
 
 #shader fragment
@@ -29,8 +30,18 @@ void main() {
 
 uniform bool triplanar;
 
+in vec4 w_pos;
 in vec3 f_normal;
 in vec3 w_normal;
+
+//RED CHANNEL
+uniform sampler2D texRed;
+
+//GREEN CHANNEL
+uniform sampler2D texGreen;
+
+//BLUE CHANNEL
+uniform sampler2D texBlue;
 
 out vec4 outColor; // User-defined output variable for fragment color
 
@@ -42,9 +53,18 @@ void main () {
     vec3 N = normalize(f_normal);
     vec3 WN = normalize(w_normal);
 
-    vec3 blendedValue = saturate(pow(WN * 1.4, vec3(4,4,4)));
-    //vec3 blendedT = 
+    vec3 X = texture(texRed, w_pos.zy).rgb;
+    vec3 Y = texture(texGreen, w_pos.zx).rgb;
+    vec3 Z = texture(texBlue, w_pos.xy).rgb;
 
+    vec3 blendedValue = WN;
+    blendedValue = WN * 1.4;
+    blendedValue = pow(blendedValue, vec3(4,4,4));
+    blendedValue = saturate(blendedValue);
 
-    outColor = vec4(blendedValue,1);
+    vec3 blendedTextureColor = Z;
+    blendedTextureColor = mix(blendedTextureColor, X, blendedValue.x);
+    blendedTextureColor = mix(blendedTextureColor, Y, blendedValue.y);
+
+    outColor = vec4(blendedTextureColor, 1);
 }

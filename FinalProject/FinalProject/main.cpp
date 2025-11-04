@@ -32,7 +32,7 @@ const float FOV = 75;
 const float EYE_DISTANCE_FROM_POT = 3;
 
 const float SPEED_COEFF = 0;
-const float SPEED_COEFF_ROTATION = 2;
+const float SPEED_COEFF_ROTATION = 0;
 
 const float BG_RED = 0.3;
 const float BG_GREEN = 0.3;
@@ -242,6 +242,41 @@ static unsigned int CreateProgram(const std::string& vertexShader, const
     return program;
 }
 
+unsigned int loadTexture(std::string texturePath, int textureUnit) {
+
+    if (textureUnit > GL_MAX_TEXTURE_UNITS) {
+        std::cout << "Inputted textureUnit is greater than " << (int)GL_MAX_TEXTURE_UNITS  << "!" << std::endl;
+    }
+
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0 + textureUnit);
+
+    std::cout << "Active Texture Unit: " << std::hex << GL_TEXTURE0 + textureUnit << std::endl;
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int widthImg, heightImg, numColCh;
+    unsigned char* bytes = stbi_load(texturePath.c_str(), &widthImg, &heightImg, &numColCh, 0);
+
+    if (!bytes) {
+        std::cout << "Texture " << texturePath.c_str() << " failed to load!" << std::endl;
+    }
+    else {
+        std::cout << "Texture " << texturePath.c_str() << " was found!" << std::endl;
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, widthImg, heightImg, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+
+    stbi_image_free(bytes);
+
+    return static_cast<unsigned int>(texture);
+}
+
 glm::vec3 computeNormal(glm::vec3 const& a, glm::vec3 const& b, glm::vec3 const& c){
     return glm::normalize(glm::cross(c - a, b - a));
 }
@@ -289,7 +324,7 @@ int main(void) {
     std::cout << sources.VertexSource << std::endl;
     std::cout << "FRAGMENT" << std::endl;
     std::cout << sources.FragmentSource << std::endl;
-    unsigned int ShaderProgram = CreateProgram(sources.VertexSource, sources.FragmentSource);
+    unsigned int ChannelTextureBlend = CreateProgram(sources.VertexSource, sources.FragmentSource);
 
 
     //Subscribe the key_callback function to key actions
@@ -299,6 +334,8 @@ int main(void) {
     std::vector<objl::Mesh> meshes = read_obj_file("teapot.obj");
     int nMeshes = meshes.size();
     create_VAOs(meshes);
+
+    
 
     //Perspective
     float aspect = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
@@ -311,14 +348,24 @@ int main(void) {
     //Texture
 
 
-    GLuint tex0Uni = glGetUniformLocation(ShaderProgram, "tex0");
-    std::cout << tex0Uni << std::endl;
+    std::string texRedString = std::string("texRock");
+    std::string texGreenString = std::string("texMoss");
+    std::string texBlueString = std::string("texRock");
+
+    std::string folder = std::string("Textures/");
+    std::string fileSuffix = std::string(".png");
+
+    unsigned int textureRed = loadTexture(folder + texRedString + fileSuffix, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    unsigned int textureGreen = loadTexture(folder + texGreenString + fileSuffix, 1);
+    glBindTexture(GL_TEXTURE_2D, 1);
+    unsigned int textureBlue = loadTexture(folder + texBlueString + fileSuffix, 2);
+    glBindTexture(GL_TEXTURE_2D, 2);
 
     //Program
     const double fpsLimit = 1.0 / MAX_FPS;
     double lastFrameTime = 0; //number of seconds since the last frame
     /* Loop until the user closes the window */
-    glUseProgram(ShaderProgram);
     
     while (!glfwWindowShouldClose(window)) {
         double now = glfwGetTime();
@@ -334,8 +381,21 @@ int main(void) {
                 glm::vec3 eyePos = glm::vec3(initEyePos.x * -glm::sin(now * SPEED_COEFF), initEyePos.y, initEyePos.z * glm::cos(now * SPEED_COEFF));
                 glm::mat4 viewMatrix = glm::lookAt(eyePos, glm::vec3(0,0,0), glm::vec3(0, 1, 0));
 
-                glUseProgram(ShaderProgram);
+                glUseProgram(ChannelTextureBlend);
 
+
+                //Texture
+                glUniform1i(glGetUniformLocation(ChannelTextureBlend, "texRed"), 0);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, textureRed);
+
+                glUniform1i(glGetUniformLocation(ChannelTextureBlend, "texGreen"), 1);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, textureGreen);
+
+                glUniform1i(glGetUniformLocation(ChannelTextureBlend, "texBlue"), 2);
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, textureBlue);
 
                 for (int i = 0; i < modelObject.nMeshes; i++) {
 
@@ -348,7 +408,13 @@ int main(void) {
                     glm::mat4 rotationMatrix = glm::rotate(
                         glm::mat4(1.0f),
                         (float)(now * SPEED_COEFF_ROTATION),
-                        glm::vec3(1.0f,0.0f,1.0f)
+                        glm::vec3(1.0f,0.0f,0.0f)
+                    );
+
+                    rotationMatrix = glm::rotate(
+                        rotationMatrix,
+                        (float)(now * SPEED_COEFF_ROTATION * 0.2),
+                        glm:: vec3(0.0f, 1.0f, 1.0f)
                     );
 
                     glm::mat4 scaleMatrix = glm::scale(
@@ -356,12 +422,12 @@ int main(void) {
                         glm::vec3(1.0f / (modelObject.bounds[i].dia/2))
                     );
 
-                    GLint matrixPLocation = glGetUniformLocation(ShaderProgram, "P");
-                    GLint matrixVLocation = glGetUniformLocation(ShaderProgram, "V");
+                    GLint matrixPLocation = glGetUniformLocation(ChannelTextureBlend, "P");
+                    GLint matrixVLocation = glGetUniformLocation(ChannelTextureBlend, "V");
 
-                    GLint matrixTLocation = glGetUniformLocation(ShaderProgram, "T");
-                    GLint matrixRLocation = glGetUniformLocation(ShaderProgram, "R");
-                    GLint matrixSLocation = glGetUniformLocation(ShaderProgram, "S");
+                    GLint matrixTLocation = glGetUniformLocation(ChannelTextureBlend, "T");
+                    GLint matrixRLocation = glGetUniformLocation(ChannelTextureBlend, "R");
+                    GLint matrixSLocation = glGetUniformLocation(ChannelTextureBlend, "S");
 
                     glUniformMatrix4fv(matrixPLocation, 1, GL_FALSE, glm::value_ptr(projMatrix));
                     glUniformMatrix4fv(matrixVLocation, 1, GL_FALSE, glm::value_ptr(viewMatrix));
