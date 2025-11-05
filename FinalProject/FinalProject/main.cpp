@@ -29,17 +29,52 @@ const float MAX_FPS = 60.0;
 const float FOV = 75;
 
 //View
+const float SPEED_COEFF = 1;
 const float EYE_DISTANCE_FROM_POT = 3;
 
-const float SPEED_COEFF = 0;
-const float SPEED_COEFF_ROTATION = 2;
+const float SPEED_COEFF_ROTATION = 0;
 
-const float BG_RED = 0.3;
-const float BG_GREEN = 0.3;
-const float BG_BLUE = 0.3;
-
+const float LIGHT_DISTANCE_FROM_POT = 1;
+const float SPEED_COEFF_LIGHT_ORBIT = 3;
 
 /*----- OBJ LOADING CODE ------*/
+
+struct FileParams {
+    std::string folder = std::string("Textures/");
+    std::string fileSuffix = std::string(".png");
+}fileParams;
+
+struct PublicShaderParams {
+    //Ambient
+    glm::vec3 bgColor = glm::vec3(0.4, 0.6, 0.7);
+
+    //Light
+    glm::vec3 ambientLight = glm::vec3(0.65, 0.8, 0.8); //glm::vec3(0.45, 0.45, 0.6)
+    int point = 0;
+    glm::vec3 lightPosDirty = glm::vec3(1.0, 1.0, 1.0);
+    glm::vec3 lightColor = glm::vec3(0.2, 0.3, 0.4);
+
+    //View
+    glm::vec3 eyePosDirty = glm::vec3(1.0, 1.0, 1.0);
+
+    //Mesh
+    std::string meshString = std::string("teapot.obj");
+
+    //Divide into seperate channels eventually
+    float diffusePower = 1;
+    int cell = 0;
+    float diffuseThreshold = 0.2;
+
+    //RED CHANNEL
+    std::string texRedString = std::string("texRock");
+
+    //GREEN CHANNEL
+    std::string texGreenString = std::string("texMoss");
+
+    //BLUE CHANNEL
+    std::string texBlueString = std::string("texRock");
+    
+}shaderParams;
 
 struct Bounds {
     glm::vec3 center, min, max;
@@ -157,6 +192,8 @@ static void key_callback(GLFWwindow* window, int key, int keycode, int action, i
         case GLFW_KEY_2:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             break;
+        case GLFW_KEY_L:
+            shaderParams.point = ~shaderParams.point;
         }
     }
 }
@@ -165,6 +202,8 @@ struct ShaderProgramSource {
     std::string VertexSource;
     std::string FragmentSource;
 };
+
+
 
 static ShaderProgramSource ParseShader(const std::string& filepath) {
     std::ifstream stream(filepath);
@@ -343,23 +382,19 @@ int main(void) {
     glm::mat4 projMatrix = glm::perspective((float)glm::radians(FOV), aspect, near, far);
 
     //View
-    glm::vec3 initEyePos = glm::normalize(glm::vec3(1.0, 1.0, 1.0)) * EYE_DISTANCE_FROM_POT;
 
-    //Texture
+    glm::vec3 initEyePos = glm::normalize(shaderParams.eyePosDirty) * EYE_DISTANCE_FROM_POT;
+    glm::vec4 initLight = glm::vec4(glm::normalize(shaderParams.lightPosDirty) * LIGHT_DISTANCE_FROM_POT, shaderParams.point);
 
+    if (shaderParams.point == 0) {
+        initLight = glm::normalize(initLight);
+    }
 
-    std::string texRedString = std::string("texRock");
-    std::string texGreenString = std::string("texMoss");
-    std::string texBlueString = std::string("texRock");
-
-    std::string folder = std::string("Textures/");
-    std::string fileSuffix = std::string(".png");
-
-    unsigned int textureRed = loadTexture(folder + texRedString + fileSuffix, 0);
+    unsigned int textureRed = loadTexture(fileParams.folder + shaderParams.texRedString + fileParams.fileSuffix, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
-    unsigned int textureGreen = loadTexture(folder + texGreenString + fileSuffix, 1);
+    unsigned int textureGreen = loadTexture(fileParams.folder + shaderParams.texGreenString + fileParams.fileSuffix, 1);
     glBindTexture(GL_TEXTURE_2D, 1);
-    unsigned int textureBlue = loadTexture(folder + texBlueString + fileSuffix, 2);
+    unsigned int textureBlue = loadTexture(fileParams.folder + shaderParams.texBlueString + fileParams.fileSuffix, 2);
     glBindTexture(GL_TEXTURE_2D, 2);
 
     //Program
@@ -374,11 +409,21 @@ int main(void) {
             /* DRAW */
             {
                 
-                glClearColor(BG_RED, BG_GREEN, BG_BLUE, 1.0);
+                glClearColor(shaderParams.bgColor.x, shaderParams.bgColor.y, shaderParams.bgColor.z, 1.0);
                 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
                 
                 
-                glm::vec3 eyePos = glm::vec3(initEyePos.x * -glm::sin(now * SPEED_COEFF), initEyePos.y, initEyePos.z * glm::cos(now * SPEED_COEFF));
+                glm::vec3 eyePos = glm::vec3(
+                    initEyePos.x * -glm::sin(now * SPEED_COEFF),
+                    initEyePos.y,
+                    initEyePos.z * glm::cos(now * SPEED_COEFF));
+                
+                glm::vec4 lightPos = glm::vec4(glm::vec3(
+                    initLight.x * -glm::sin(now * SPEED_COEFF_LIGHT_ORBIT),
+                    initLight.y,
+                    initLight.z * glm::cos(now * SPEED_COEFF_LIGHT_ORBIT)),
+                    shaderParams.point);
+
                 glm::mat4 viewMatrix = glm::lookAt(eyePos, glm::vec3(0,0,0), glm::vec3(0, 1, 0));
 
                 glUseProgram(ChannelTextureBlend);
@@ -424,6 +469,13 @@ int main(void) {
 
                     GLint matrixPLocation = glGetUniformLocation(ChannelTextureBlend, "P");
                     GLint matrixVLocation = glGetUniformLocation(ChannelTextureBlend, "V");
+                    GLint vec3CameraPosLocation = glGetUniformLocation(ChannelTextureBlend, "cameraPos");
+                    GLint vec4LightLocation = glGetUniformLocation(ChannelTextureBlend, "light");
+                    GLint vec3LightColorLocation = glGetUniformLocation(ChannelTextureBlend, "lightColor");
+                    GLint vec3AmbientLightLocation = glGetUniformLocation(ChannelTextureBlend, "ambientLight");
+                    GLint floatDiffusePower = glGetUniformLocation(ChannelTextureBlend, "diffusePower");
+                    GLint floatDiffuseThreshold = glGetUniformLocation(ChannelTextureBlend, "diffuseThreshold");
+                    GLint intCellShadingThreshold = glGetUniformLocation(ChannelTextureBlend, "cell");
 
                     GLint matrixTLocation = glGetUniformLocation(ChannelTextureBlend, "T");
                     GLint matrixRLocation = glGetUniformLocation(ChannelTextureBlend, "R");
@@ -431,6 +483,13 @@ int main(void) {
 
                     glUniformMatrix4fv(matrixPLocation, 1, GL_FALSE, glm::value_ptr(projMatrix));
                     glUniformMatrix4fv(matrixVLocation, 1, GL_FALSE, glm::value_ptr(viewMatrix));
+                    glUniform3f(vec3CameraPosLocation, eyePos.x, eyePos.y, eyePos.z);
+                    glUniform4f(vec4LightLocation, lightPos.x, lightPos.y, lightPos.z, lightPos.w);
+                    glUniform3f(vec3LightColorLocation, shaderParams.lightColor.x, shaderParams.lightColor.y, shaderParams.lightColor.z);
+                    glUniform3f(vec3AmbientLightLocation, shaderParams.ambientLight.x, shaderParams.ambientLight.y, shaderParams.ambientLight.z);
+                    glUniform1f(floatDiffusePower, shaderParams.diffusePower);
+                    glUniform1f(floatDiffuseThreshold, shaderParams.diffuseThreshold);
+                    glUniform1i(intCellShadingThreshold, shaderParams.cell);
 
                     glUniformMatrix4fv(matrixTLocation, 1, GL_FALSE, glm::value_ptr(transMatrix));
                     glUniformMatrix4fv(matrixRLocation, 1, GL_FALSE, glm::value_ptr(rotationMatrix));

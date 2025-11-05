@@ -34,6 +34,16 @@ in vec4 w_pos;
 in vec3 f_normal;
 in vec3 w_normal;
 
+uniform vec3 cameraPos;
+
+uniform vec4 light;
+uniform vec3 lightColor;
+uniform vec3 ambientLight;
+
+uniform float diffusePower;
+uniform int cell;
+uniform float diffuseThreshold;
+
 //RED CHANNEL
 uniform sampler2D texRed;
 
@@ -66,5 +76,17 @@ void main () {
     blendedTextureColor = mix(blendedTextureColor, X, blendedValue.x);
     blendedTextureColor = mix(blendedTextureColor, Y, blendedValue.y);
 
-    outColor = vec4(blendedTextureColor, 1);
+    //If w = 0, its directional. If w = 1, its point.
+    vec3 lightVector= light.xyz - (w_pos.xyz * light.w);
+    lightVector = normalize(lightVector);
+
+    vec3 V = normalize(cameraPos - w_pos.xyz);
+    vec3 H = normalize(lightVector + V);
+    float lambertian = clamp(dot(lightVector,WN), 0, 1);
+
+
+    //If cell = 1, use stepped lambertian. If cell = 0, use just lambertian
+    vec3 diffuse = (step(diffuseThreshold, lambertian) * cell + lambertian * (1 - cell)) * lightColor * diffusePower;
+
+    outColor = vec4((blendedTextureColor + diffuse) * ambientLight, 1);
 }
