@@ -62,7 +62,7 @@ struct PublicShaderParams {
 
     //Divide into seperate channels eventually
     float diffusePower = 1;
-    int cell = 0;
+    int cell = 1;
     float diffuseThreshold = 0.2;
 
     //RED CHANNEL
@@ -192,8 +192,12 @@ static void key_callback(GLFWwindow* window, int key, int keycode, int action, i
         case GLFW_KEY_2:
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
             break;
-        case GLFW_KEY_L:
+        case GLFW_KEY_3:
             shaderParams.point = ~shaderParams.point;
+            break;
+        case GLFW_KEY_4:
+            shaderParams.cell = ~shaderParams.cell;
+            break;
         }
     }
 }

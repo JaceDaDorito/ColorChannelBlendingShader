@@ -3,6 +3,9 @@
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
+//layout(location = 2) in vec3 tangent;
+//layout(location = 3) in vec3 bitangent;
+
 uniform mat4 P;
 uniform mat4 V;
 
@@ -33,6 +36,7 @@ uniform bool triplanar;
 in vec4 w_pos;
 in vec3 f_normal;
 in vec3 w_normal;
+//in vec4 TBN;
 
 uniform vec3 cameraPos;
 
@@ -46,12 +50,17 @@ uniform float diffuseThreshold;
 
 //RED CHANNEL
 uniform sampler2D texRed;
+uniform sampler2D texNormalRed;
 
 //GREEN CHANNEL
 uniform sampler2D texGreen;
+uniform sampler2D texNormalGreen;
 
 //BLUE CHANNEL
 uniform sampler2D texBlue;
+uniform sampler2D texNormalBlue;
+
+
 
 out vec4 outColor; // User-defined output variable for fragment color
 
@@ -67,6 +76,10 @@ void main () {
     vec3 Y = texture(texGreen, w_pos.zx).rgb;
     vec3 Z = texture(texBlue, w_pos.xy).rgb;
 
+    /*vec3 X_N = texture(texNormalRed, w_pos.zy).rgb;
+    vec3 Y_N = texture(texNormalGreen, w_pos.zx).rgb;
+    vec3 Z_N = texture(texNormalBlue, w_pos.xy).rgb;*/
+
     vec3 blendedValue = WN;
     blendedValue = WN * 1.4;
     blendedValue = pow(blendedValue, vec3(4,4,4));
@@ -76,6 +89,10 @@ void main () {
     blendedTextureColor = mix(blendedTextureColor, X, blendedValue.x);
     blendedTextureColor = mix(blendedTextureColor, Y, blendedValue.y);
 
+    /*vec3 blendedNormalTextureColor =  Z_N;
+    blendedNormalTextureColor = mix(blendedNormalTextureColor, X_N, blendedValue.x);
+    blendedNormalTextureColor = mix(blendedNormalTextureColor, Y_N, blendedValue.y);*/
+
     //If w = 0, its directional. If w = 1, its point.
     vec3 lightVector= light.xyz - (w_pos.xyz * light.w);
     lightVector = normalize(lightVector);
@@ -83,7 +100,6 @@ void main () {
     vec3 V = normalize(cameraPos - w_pos.xyz);
     vec3 H = normalize(lightVector + V);
     float lambertian = clamp(dot(lightVector,WN), 0, 1);
-
 
     //If cell = 1, use stepped lambertian. If cell = 0, use just lambertian
     vec3 diffuse = (step(diffuseThreshold, lambertian) * cell + lambertian * (1 - cell)) * lightColor * diffusePower;
