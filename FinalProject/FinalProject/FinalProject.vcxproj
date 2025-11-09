@@ -104,13 +104,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLEW\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLFW\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\obj_loader;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\glm;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\Assimp\assimp\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLEW\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLFW\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\obj_loader;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\glm</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLEW\lib\Release\x64;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLFW\lib-vc2022</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLEW\lib\Release\x64;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\Assimp\assimp\lib\Debug;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLFW\lib-vc2022</AdditionalLibraryDirectories>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
