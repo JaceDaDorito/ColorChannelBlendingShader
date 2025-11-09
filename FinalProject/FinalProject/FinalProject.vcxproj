@@ -104,7 +104,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\Assimp\assimp\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLEW\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLFW\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\obj_loader;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\glm</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\glad\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\Assimp\assimp\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLEW\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLFW\include;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\obj_loader;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\glm</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -136,6 +136,7 @@
     <None Include="channeltextureblend.shader" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

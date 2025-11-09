@@ -4,9 +4,11 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 
+
 #include <iostream>
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
 #include <fstream>
 #include <string>
 #include <sstream>
@@ -20,6 +22,7 @@
 #include <glm/gtx/string_cast.hpp>
 
 #include "OBJ_loader.h"
+#include "shader.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -43,11 +46,99 @@ const float SPEED_COEFF_LIGHT_ORBIT = 3;
 
 /*----- OBJ LOADING CODE ------*/
 
+struct Vertex {
+    glm::vec3 Position;
+    glm::vec3 Normal;
+    glm::vec2 TexCoords;
+};
+
+class Mesh {
+    public:
+        // mesh data
+        std::vector<Vertex>       vertices;
+        std::vector<unsigned int> indices;
+        std::vector<Texture>      textures;
+
+        Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<Texture> textures)
+        {
+            this->vertices = vertices;
+            this->indices = indices;
+            this->textures = textures;
+
+            setupMesh();
+        }
+        void Draw(Shader& shader)
+        {
+            //rewrite this under the context of the 3 color channels
+
+            unsigned int diffuseNr = 1;
+            unsigned int specularNr = 1;
+            for (unsigned int i = 0; i < textures.size(); i++)
+            {
+                glActiveTexture(GL_TEXTURE0 + i); // activate proper texture unit before binding
+                // retrieve texture number (the N in diffuse_textureN)
+                std::string number;
+                std::string name = textures[i].type;
+                if (name == "texture_diffuse")
+                    number = std::to_string(diffuseNr++);
+                else if (name == "texture_specular")
+                    number = std::to_string(specularNr++);
+
+                shader.setInt(("material." + name + number).c_str(), i);
+                glBindTexture(GL_TEXTURE_2D, textures[i].id);
+            }
+            glActiveTexture(GL_TEXTURE0);
+
+            // draw mesh
+            glBindVertexArray(VAO);
+            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+            glBindVertexArray(0);
+        }
+
+    private:
+        //  render data
+        unsigned int VAO, VBO, EBO;
+
+        void setupMesh()
+        {
+            glGenVertexArrays(1, &VAO);
+            glGenBuffers(1, &VBO);
+            glGenBuffers(1, &EBO);
+
+            glBindVertexArray(VAO);
+            glBindBuffer(GL_ARRAY_BUFFER, VBO);
+
+            glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
+
+            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+            glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int),
+                &indices[0], GL_STATIC_DRAW);
+
+            // vertex positions
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
+            // vertex normals
+            glEnableVertexAttribArray(1);
+            glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, Normal));
+            // vertex texture coords
+            glEnableVertexAttribArray(2);
+            glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, TexCoords));
+
+            glBindVertexArray(0);
+        }
+};
+
+struct Texture {
+    unsigned int id;
+    std::string type;
+};
+
+
 struct FileParams {
     std::string folder = std::string("Textures/");
     std::string fileSuffix = std::string(".png");
 }fileParams;
-
+ 
 struct PublicShaderParams {
     //Ambient
     glm::vec3 bgColor = glm::vec3(0.4, 0.6, 0.7);
@@ -79,98 +170,6 @@ struct PublicShaderParams {
     std::string texBlueString = std::string("texRock");
     
 }shaderParams;
-
-struct Bounds {
-    glm::vec3 center, min, max;
-    float dia;
-};
-
-static Bounds computeBounds(const std::vector<objl::Vertex>& V, int n) {
-    float
-        min_x, max_x,
-        min_y, max_y,
-        min_z, max_z;
-    min_x = max_x = V[0].Position.X;
-    min_y = max_y = V[0].Position.Y;
-    min_z = max_z = V[0].Position.Z;
-    for (int i = 0; i < n; i++) {
-        if (V[i].Position.X < min_x) min_x = V[i].Position.X;
-        if (V[i].Position.X > max_x) max_x = V[i].Position.X;
-        if (V[i].Position.Y < min_y) min_y = V[i].Position.Y;
-        if (V[i].Position.Y > max_y) max_y = V[i].Position.Y;
-        if (V[i].Position.Z < min_z) min_z = V[i].Position.Z;
-        if (V[i].Position.Z > max_z) max_z = V[i].Position.Z;
-    }
-    struct Bounds bounds;
-    bounds.min = glm::vec3(min_x, min_y, min_z);
-    bounds.max = glm::vec3(max_x, max_y, max_z);
-    std::cout << "Bounds = [" << glm::to_string(bounds.min) <<
-        glm::to_string(bounds.max) << std::endl;
-    bounds.center = (bounds.min + bounds.max) / 2.f;
-    glm::vec3 diaVector = bounds.max - bounds.min;
-    bounds.dia = glm::length(diaVector);
-    std::cout << "radius: " << bounds.dia / 2 << std::endl;
-    std::cout << "Center = " << glm::to_string(bounds.center) << std::endl;
-    return bounds;
-}
-
-static std::vector<objl::Mesh> read_obj_file(const std::string& objFilePath) {
-    objl::Loader* loader = new objl::Loader;
-    // Load .obj File
-    bool loadSuccess = loader->LoadFile(objFilePath);
-    if (loadSuccess) {
-        std::cout << "File " << objFilePath << " was found!" << std::endl;
-    }
-    return loader->LoadedMeshes;
-}
-
-struct {
-    int nMeshes;
-    unsigned int* vaos;
-    struct Bounds* bounds;
-    unsigned int* nelements;
-}modelObject;
-
-static void create_VAOs(std::vector<objl::Mesh>& loadedMeshes) {
-    int nMeshes = loadedMeshes.size();
-    std::cout << "Meshes #" << nMeshes << std::endl;
-    modelObject.nMeshes = nMeshes;
-    modelObject.vaos = new unsigned int[nMeshes];
-    modelObject.nelements = new unsigned int[nMeshes];
-    modelObject.bounds = new struct Bounds[nMeshes];
-    int i = 0;
-    for (const auto& _curMesh : loadedMeshes) {
-        int nVerts = _curMesh.Vertices.size();
-        int nBytesPerVertex = sizeof(_curMesh.Vertices[0]);
-        int nFloatsPerVertex = nBytesPerVertex / sizeof(float);
-        float* vertices = new float[nFloatsPerVertex * nVerts];
-        int nElements = _curMesh.Indices.size();
-        modelObject.nelements[i] = nElements;
-        std::cout << "verts #" << nVerts << " size of floats per vertex: " <<
-            nFloatsPerVertex << std::endl;
-        std::cout << "elements #" << nElements << std::endl;
-        modelObject.bounds[i] = computeBounds(_curMesh.Vertices, nVerts);
-        memcpy(vertices, _curMesh.Vertices.data(), nBytesPerVertex * nVerts);
-        unsigned int vao;
-        glGenVertexArrays(1, &vao);
-        modelObject.vaos[i] = vao;
-        glBindVertexArray(vao);
-        unsigned int vbo;
-        glGenBuffers(1, &vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, nBytesPerVertex * nVerts, vertices,
-            GL_STATIC_DRAW);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, nBytesPerVertex, 0);
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, nBytesPerVertex, (void*)(3* sizeof(float)));
-        // To enable Texture coordinate attributes uncomments the followinglines.
-        //glEnableVertexAttribArray(2);
-        //glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, nBytesPerVertex, (void*)(6 * sizeof(float)));
-        glBindVertexArray(0);
-        i++;
-    }
-}
 
 /*------------------------------*/
 
