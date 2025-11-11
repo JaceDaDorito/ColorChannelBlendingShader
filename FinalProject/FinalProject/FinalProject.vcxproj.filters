@@ -20,10 +20,21 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="channeltextureblend.shader" />
+    <None Include="Shaders\colorchannelblend_fs.shader">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\colorchannelblend_vs.shader">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="model.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh.h">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="shader.h">

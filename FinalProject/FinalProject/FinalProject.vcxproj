@@ -133,9 +133,12 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="channeltextureblend.shader" />
+    <None Include="Shaders\colorchannelblend_fs.shader" />
+    <None Include="Shaders\colorchannelblend_vs.shader" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mesh.h" />
+    <ClInclude Include="model.h" />
     <ClInclude Include="shader.h" />
     <ClInclude Include="stb_image.h" />
   </ItemGroup>
