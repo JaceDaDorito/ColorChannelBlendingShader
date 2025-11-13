@@ -9,7 +9,6 @@
 #define GLFW_INCLUDE_NONE
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
-#include <glad/glad.h>
 
 #include <fstream>
 #include <string>
@@ -25,12 +24,14 @@
 
 #include "OBJ_loader.h"
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #include "shader.h"
 #include "mesh.h"
 #include "model.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+
 
 using namespace std;
 using namespace glm;
@@ -45,7 +46,7 @@ const float FOV = 75;
 
 //View
 const float SPEED_COEFF = 1;
-const float EYE_DISTANCE_FROM_POT = 3;
+const float EYE_DISTANCE_FROM_POT = 10;
 
 const float SPEED_COEFF_ROTATION = 0;
 

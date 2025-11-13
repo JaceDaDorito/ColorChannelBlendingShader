@@ -110,7 +110,7 @@
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLEW\lib\Release\x64;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\Assimp\assimp\lib\Debug;C:\Users\jtorr\OneDrive\Desktop\School\GraphicsAgain\Libraries\GLFW\lib-vc2022</AdditionalLibraryDirectories>
-      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
