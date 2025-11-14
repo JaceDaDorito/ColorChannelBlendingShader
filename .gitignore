@@ -419,3 +419,5 @@ FodyWeavers.xsd
 
 FinalProject/FinalProject/glew32.dll
 FinalProject/FinalProject/glfw3.dll
+FinalProject/FinalProject/assimp-vc143-mt.lib
+FinalProject/FinalProject/assimp-vc143-mt.dll
