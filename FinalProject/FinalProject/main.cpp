@@ -46,41 +46,65 @@ const float FOV = 75;
 
 //View
 const float SPEED_COEFF = 1;
-const float EYE_DISTANCE_FROM_POT = 10;
+const float EYE_DISTANCE_FROM_POT = 4;
 
 const float SPEED_COEFF_ROTATION = 0;
 
 const float LIGHT_DISTANCE_FROM_POT = 1;
-const float SPEED_COEFF_LIGHT_ORBIT = 3;
+const float SPEED_COEFF_LIGHT_ORBIT = 0;
+
+struct shaderTexStr {
+    string RED_DIFFUSE = "texRedDiffuse";
+    string RED_NORMAL= "texRedNormal";
+
+    string GREEN_DIFFUSE = "texGreenDiffuse";
+    string GREEN_NORMAL = "texGreenNormal";
+
+    string BLUE_DIFFUSE = "texBlueDiffuse";
+    string BLUE_NORMAL = "texBlueNormal";
+}shaderTexStr;
 
 struct FileParams {
-    string folder = string("Textures/");
-    string fileSuffix = string(".png");
+    string textureFolder = string("Assets/Textures/");
+    string textureFileSuffix = string(".png");
+
+    string meshFolder = string("Assets/Meshes/");
+
+    string currentMesh = ("sphere.obj");
 }fileParams;
  
 struct PublicShaderParams {
     //Ambient
-    vec3 bgColor = vec3(0.4, 0.6, 0.7);
+    vec3 bgColor = vec3(0.885, 0.737, 0.69);
 
     //Light
-    vec3 ambientLight = vec3(0.65, 0.8, 0.8); //vec3(0.45, 0.45, 0.6)
+    vec3 ambientLight = vec3(0.7, 0.7, 0.6); //vec3(0.45, 0.45, 0.6)
     int point = 0;
     vec3 lightPosDirty = vec3(1.0, 1.0, 1.0);
-    vec3 lightColor = vec3(0.2, 0.3, 0.4);
+    vec3 lightColor = vec3(0.295, 0.245, 0.23);
 
     //View
-    vec3 eyePosDirty = vec3(1.0, 1.0, 1.0);
+    vec3 eyePosDirty = vec3(1.0, 0.5, 1.0);
 
     //Divide into seperate channels eventually
     float diffusePower = 1;
     int cell = 1;
-    float diffuseThreshold = 0.2;
+    float diffuseThreshold = 0.7;
 
     //RED CHANNEL
+    float redScale = 0.3;
+    string redDiffuse = string("texture_diffuse_rock");
+    string redNormal = string("texture_normal_rock");
 
-    //GREEN CHANNEL
+    //GREEN 
+    float greenScale = 1;
+    string greenDiffuse = string("texture_diffuse_grass");
+    string greenNormal = string("texture_normal_grass");
 
     //BLUE CHANNEL
+    float blueScale = 0.3;
+    string blueDiffuse = string("texture_diffuse_rock");
+    string blueNormal = string("texture_normal_rock");
     
 }shaderParams;
 
@@ -117,6 +141,42 @@ static void key_callback(GLFWwindow* window, int key, int keycode, int action, i
         }
     }
 }
+
+unsigned int loadTexture(std::string texturePath, int textureUnit) {
+
+    if (textureUnit > GL_MAX_TEXTURE_UNITS) {
+        std::cout << "Inputted textureUnit is greater than " << (int)GL_MAX_TEXTURE_UNITS << "!" << std::endl;
+    }
+
+    GLuint texture;
+    glGenTextures(1, &texture);
+    glActiveTexture(GL_TEXTURE0 + textureUnit);
+
+    std::cout << "Active Texture Unit: " << std::hex << GL_TEXTURE0 + textureUnit << std::endl;
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    int widthImg, heightImg, numColCh;
+    unsigned char* bytes = stbi_load(texturePath.c_str(), &widthImg, &heightImg, &numColCh, 0);
+
+    if (!bytes) {
+        std::cout << "Texture " << texturePath.c_str() << " failed to load!" << std::endl;
+    }
+    else {
+        std::cout << "Texture " << texturePath.c_str() << " was found!" << std::endl;
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, widthImg, heightImg, 0, GL_RGBA, GL_UNSIGNED_BYTE, bytes);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+
+    stbi_image_free(bytes);
+
+    return static_cast<unsigned int>(texture);
+}
+
 
 int main(void) {
     GLFWwindow* window;
@@ -159,7 +219,7 @@ int main(void) {
     glfwSetKeyCallback(window, key_callback);
     glEnable(GL_DEPTH_TEST);
 
-    Model teapot("Assets/teapot.obj");
+    Model teapot(fileParams.meshFolder + fileParams.currentMesh);
 
 
     //Perspective
@@ -175,6 +235,21 @@ int main(void) {
     if (shaderParams.point == 0) {
         initLight = normalize(initLight);
     }
+
+    unsigned int textureRed = loadTexture(fileParams.textureFolder + shaderParams.redDiffuse + fileParams.textureFileSuffix, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    unsigned int textureRedNormal = loadTexture(fileParams.textureFolder + shaderParams.redNormal + fileParams.textureFileSuffix, 1);
+    glBindTexture(GL_TEXTURE_2D, 1);
+
+    unsigned int textureGreen = loadTexture(fileParams.textureFolder + shaderParams.greenDiffuse + fileParams.textureFileSuffix, 2);
+    glBindTexture(GL_TEXTURE_2D, 2);
+    unsigned int textureGreenNormal = loadTexture(fileParams.textureFolder + shaderParams.greenNormal + fileParams.textureFileSuffix, 3);
+    glBindTexture(GL_TEXTURE_2D, 3);
+
+    unsigned int textureBlue = loadTexture(fileParams.textureFolder + shaderParams.blueDiffuse + fileParams.textureFileSuffix, 4);
+    glBindTexture(GL_TEXTURE_2D, 4);
+    unsigned int textureBlueNormal = loadTexture(fileParams.textureFolder + shaderParams.blueNormal + fileParams.textureFileSuffix, 5);
+    glBindTexture(GL_TEXTURE_2D, 5);
 
     //Program
     const double fpsLimit = 1.0 / MAX_FPS;
@@ -216,19 +291,37 @@ int main(void) {
                 mat4 rotationMatrix = rotate(
                     mat4(1.0f),
                     (float)(now * SPEED_COEFF_ROTATION),
-                    vec3(1.0f,0.0f,0.0f)
-                );
-
-                rotationMatrix = rotate(
-                    rotationMatrix,
-                    (float)(now * SPEED_COEFF_ROTATION * 0.2),
-                        vec3(0.0f, 1.0f, 1.0f)
+                    vec3(0.0f,1.0f,0.0f)
                 );
 
                 mat4 scaleMatrix = scale(
                     mat4(1.0f),
                     vec3(1.0f, 1.0f, 1.0f)
                 );
+
+                glUniform1i(glGetUniformLocation(channelTextureBlend.ID, shaderTexStr.RED_DIFFUSE.c_str()), 0);
+                glActiveTexture(GL_TEXTURE0);
+                glBindTexture(GL_TEXTURE_2D, textureRed);
+
+                glUniform1i(glGetUniformLocation(channelTextureBlend.ID, shaderTexStr.RED_NORMAL.c_str()), 1);
+                glActiveTexture(GL_TEXTURE1);
+                glBindTexture(GL_TEXTURE_2D, textureRedNormal);
+
+                glUniform1i(glGetUniformLocation(channelTextureBlend.ID, shaderTexStr.GREEN_DIFFUSE.c_str()), 2);
+                glActiveTexture(GL_TEXTURE2);
+                glBindTexture(GL_TEXTURE_2D, textureGreen);
+
+                glUniform1i(glGetUniformLocation(channelTextureBlend.ID, shaderTexStr.GREEN_NORMAL.c_str()), 3);
+                glActiveTexture(GL_TEXTURE3);
+                glBindTexture(GL_TEXTURE_2D, textureGreenNormal);
+
+                glUniform1i(glGetUniformLocation(channelTextureBlend.ID, shaderTexStr.BLUE_DIFFUSE.c_str()), 4);
+                glActiveTexture(GL_TEXTURE4);
+                glBindTexture(GL_TEXTURE_2D, textureBlue);
+
+                glUniform1i(glGetUniformLocation(channelTextureBlend.ID, shaderTexStr.BLUE_NORMAL.c_str()), 5);
+                glActiveTexture(GL_TEXTURE5);
+                glBindTexture(GL_TEXTURE_2D, textureBlueNormal);
 
                 channelTextureBlend.setMat4("P", projMatrix);
                 channelTextureBlend.setMat4("V", viewMatrix);
@@ -238,6 +331,7 @@ int main(void) {
                 channelTextureBlend.setMat4("S", scaleMatrix);
 
                 channelTextureBlend.setVec4("light", lightPos);
+                channelTextureBlend.setVec3("viewPos", eyePos);
 
                 channelTextureBlend.setVec3("cameraPos", eyePos);
                 channelTextureBlend.setVec3("lightColor", shaderParams.lightColor);
@@ -247,6 +341,10 @@ int main(void) {
                 channelTextureBlend.setFloat("diffuseThreshold", shaderParams.diffuseThreshold);
 
                 channelTextureBlend.setInt("cell", shaderParams.cell);
+
+                channelTextureBlend.setFloat("redScale", shaderParams.redScale);
+                channelTextureBlend.setFloat("greenScale", shaderParams.greenScale);
+                channelTextureBlend.setFloat("blueScale", shaderParams.blueScale);
 
                 teapot.Draw(channelTextureBlend);
 

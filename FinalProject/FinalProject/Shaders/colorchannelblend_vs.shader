@@ -15,14 +15,25 @@ uniform mat4 S;
 
 out vec4 w_pos;
 out vec3 f_normal;
-out vec3 w_normal;
+out mat3 TBN;
+
+out vec3 debugVector;
+
 
 void main() {
 
     mat4 M = S * R * T;
 
+    mat3 normalMatrix = transpose(inverse(mat3(M)));
+    vec3 W_T = normalize(normalMatrix * tangent);
+    vec3 W_N = normalize(normalMatrix * normal);
+    vec3 W_B = normalize(cross(W_N, W_T));
+
+    TBN = mat3(W_T, W_B, W_N);
+
     f_normal = normal;
-    w_normal = (transpose(inverse(R)) * vec4(normal, 1.0)).xyz;
+
+    debugVector = W_B;
 
     w_pos = M * vec4(position, 1.0);
     gl_Position = P * V * w_pos;
