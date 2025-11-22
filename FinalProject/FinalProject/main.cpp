@@ -70,7 +70,7 @@ struct FileParams {
 
     string meshFolder = string("Assets/Meshes/");
 
-    string currentMesh = ("sphere.obj");
+    string currentMesh = ("monkey.obj");
 }fileParams;
  
 struct PublicShaderParams {
@@ -93,16 +93,25 @@ struct PublicShaderParams {
 
     //RED CHANNEL
     float redScale = 0.3;
+    float redGloss = 0.773;
+    float redSpecularStrength = 1;
+    float redSpecularExponent = 4.15;
     string redDiffuse = string("texture_diffuse_rock");
     string redNormal = string("texture_normal_rock");
 
     //GREEN 
     float greenScale = 1;
+    float greenGloss = 0;
+    float greenSpecularStrength = 0;
+    float greenSpecularExponent = 0;
     string greenDiffuse = string("texture_diffuse_grass");
     string greenNormal = string("texture_normal_grass");
 
     //BLUE CHANNEL
     float blueScale = 0.3;
+    float blueGloss = 0.773;
+    float blueSpecularStrength = 1;
+    float blueSpecularExponent = 4.15;
     string blueDiffuse = string("texture_diffuse_rock");
     string blueNormal = string("texture_normal_rock");
     
@@ -343,8 +352,19 @@ int main(void) {
                 channelTextureBlend.setInt("cell", shaderParams.cell);
 
                 channelTextureBlend.setFloat("redScale", shaderParams.redScale);
+                channelTextureBlend.setFloat("redGloss", shaderParams.redGloss);
+                channelTextureBlend.setFloat("redSpecularExponent", shaderParams.redSpecularExponent);
+                channelTextureBlend.setFloat("redSpecularStrength", shaderParams.redSpecularStrength);
+
                 channelTextureBlend.setFloat("greenScale", shaderParams.greenScale);
+                channelTextureBlend.setFloat("greenGloss", shaderParams.greenGloss);
+                channelTextureBlend.setFloat("greenSpecularExponent", shaderParams.greenSpecularExponent);
+                channelTextureBlend.setFloat("greenSpecularStrength", shaderParams.greenSpecularStrength);
+
                 channelTextureBlend.setFloat("blueScale", shaderParams.blueScale);
+                channelTextureBlend.setFloat("blueGloss", shaderParams.blueGloss);
+                channelTextureBlend.setFloat("blueSpecularExponent", shaderParams.blueSpecularExponent);
+                channelTextureBlend.setFloat("blueSpecularStrength", shaderParams.blueSpecularStrength);
 
                 teapot.Draw(channelTextureBlend);
 
