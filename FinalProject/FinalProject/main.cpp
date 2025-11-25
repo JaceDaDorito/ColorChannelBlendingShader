@@ -46,14 +46,14 @@ const float FOV = 75;
 
 //View
 const float SPEED_COEFF = 1;
-const float EYE_DISTANCE_FROM_POT = 3;
+const float EYE_DISTANCE_FROM_POT = 4;
 const float USE_CAMERA_POS = 1;
 
 const float USE_MONKEY = 0;
 
 const float SPEED_COEFF_ROTATION = 0;
 
-const float LIGHT_DISTANCE_FROM_POT = 1;
+const float LIGHT_DISTANCE_FROM_POT = 6;
 const float SPEED_COEFF_LIGHT_ORBIT = 0;
 
 
@@ -61,6 +61,13 @@ const float SPEED_COEFF_LIGHT_ORBIT = 0;
 struct camParams {
     vec3 pos = vec3(-1.23814f, 1.0565f, 1.15181f);
     vec3 lookAtPoint = vec3(0.373438f, 0.927388f, 0.361281f);
+
+    //window
+    int width = WINDOW_WIDTH, height = WINDOW_HEIGHT;
+    float aspect = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
+    float near = 0.1, far = 100;
+    mat4 projMatrix = perspective((float)radians(FOV), aspect, near, far);
+
 }camParams;
 
 struct shaderTexStr {
@@ -85,13 +92,13 @@ struct FileParams {
  
 struct PublicShaderParams {
     //Ambient
-    vec3 bgColor = vec3(0.885, 0.737, 0.69);
+    vec3 bgColor = vec3(0.73, 0.78, 0.8);
 
     //Light
-    vec3 ambientLight = vec3(0.7, 0.7, 0.6); //vec3(0.45, 0.45, 0.6)
+    vec3 ambientLight = vec3(0.6, 0.68, 0.7); //vec3(0.45, 0.45, 0.6)
     int point = 0;
-    vec3 lightPosDirty = vec3(1.0, 1.0, 1.0);
-    vec3 lightColor = vec3(0.295, 0.245, 0.23);
+    vec3 lightPosDirty = USE_MONKEY ? vec3(1,0,1) : vec3(0.5, -1, 1);
+    vec3 lightColor = vec3(0.2, 0.2, 0.24);
 
     //View
     vec3 eyePosDirty = vec3(1.0, 0.5, 1.0);
@@ -99,29 +106,29 @@ struct PublicShaderParams {
     //Divide into seperate channels eventually
     float diffusePower = 1.0f;
     int cell = 1;
-    float diffuseThreshold = 0.7;
+    float diffuseThreshold = 0.8;
 
     //RED CHANNEL
     float redScale = 0.3;
     float redGloss = 0.773;
-    float redSpecularStrength = 1;
-    float redSpecularExponent = 4.15;
+    /*float redSpecularStrength = 1;
+    float redSpecularExponent = 4.15;*/
     string redDiffuse = string("texture_diffuse_rock");
     string redNormal = string("texture_normal_rock");
 
     //GREEN 
     float greenScale = 1;
     float greenGloss = 0;
-    float greenSpecularStrength = 0;
-    float greenSpecularExponent = 0;
+    /*float greenSpecularStrength = 0;
+    float greenSpecularExponent = 0;*/
     string greenDiffuse = string("texture_diffuse_grass");
     string greenNormal = string("texture_normal_grass");
 
     //BLUE CHANNEL
     float blueScale = 0.3;
     float blueGloss = 0;
-    float blueSpecularStrength = 0;
-    float blueSpecularExponent = 0;
+    /*float blueSpecularStrength = 0;
+    float blueSpecularExponent = 0;*/
     string blueDiffuse = string("texture_diffuse_rock");
     string blueNormal = string("texture_normal_rock");
     
@@ -158,7 +165,16 @@ static void key_callback(GLFWwindow* window, int key, int keycode, int action, i
             shaderParams.cell = ~shaderParams.cell;
             break;
         }
+ 
     }
+}
+
+static void window_callback(GLFWwindow *window, int width, int height) {
+    camParams.width = width;
+    camParams.height = height;
+    camParams.aspect = (float)width / (float)height;
+    camParams.projMatrix = perspective((float)radians(FOV), camParams.aspect, camParams.near, camParams.far);
+    glViewport(0, 0, width, height);
 }
 
 unsigned int loadTexture(std::string texturePath, int textureUnit) {
@@ -194,11 +210,12 @@ unsigned int loadTexture(std::string texturePath, int textureUnit) {
 
     return static_cast<unsigned int>(texture);
 }
-unsigned int loadCubemap(vector<std::string> faces)
+unsigned int loadCubemap(vector<std::string> faces, int textureUnit)
 {
     unsigned int textureID;
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+    glActiveTexture(GL_TEXTURE0 + textureUnit);
 
     int width, height, nrChannels;
     for (unsigned int i = 0; i < faces.size(); i++)
@@ -264,6 +281,7 @@ int main(void) {
 
     //Subscribe the key_callback function to key actions
     glfwSetKeyCallback(window, key_callback);
+    glfwSetWindowSizeCallback(window, window_callback);
     glEnable(GL_DEPTH_TEST);
 
     Model teapot(fileParams.meshFolder + fileParams.currentMesh);
@@ -325,8 +343,6 @@ int main(void) {
 
     //Perspective
     float aspect = (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT;
-    float near = 0.1, far = 100;
-    mat4 projMatrix = perspective((float)radians(FOV), aspect, near, far);
 
     vec3 eyePos = camParams.pos;
     mat4 viewMatrix = lookAt(eyePos, camParams.lookAtPoint, vec3(0, 1, 0));
@@ -366,9 +382,8 @@ int main(void) {
     unsigned int textureBlueNormal = loadTexture(fileParams.textureFolder + shaderParams.blueNormal + fileParams.textureFileSuffix, 5);
     glBindTexture(GL_TEXTURE_2D, 5);
 
-    unsigned int skyboxTexture = loadCubemap(faces);
-
-    skybox.setInt("skybox", 6);
+    unsigned int skyboxTexture = loadCubemap(faces, 6);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, 6);
 
     //Program
     const double fpsLimit = 1.0 / MAX_FPS;
@@ -414,7 +429,7 @@ int main(void) {
                 mat4 rotationMatrix = rotate(
                     mat4(1.0f),
                     (float)(now * SPEED_COEFF_ROTATION),
-                    vec3(0.0f,1.0f,0.0f)
+                    vec3(1.0f,1.0f,0.0f)
                 );
 
                 mat4 scaleMatrix = scale(
@@ -446,7 +461,7 @@ int main(void) {
                 glActiveTexture(GL_TEXTURE5);
                 glBindTexture(GL_TEXTURE_2D, textureBlueNormal);
 
-                channelTextureBlend.setMat4("P", projMatrix);
+                channelTextureBlend.setMat4("P", camParams.projMatrix);
                 channelTextureBlend.setMat4("V", viewMatrix);
 
                 channelTextureBlend.setMat4("T", transMatrix);
@@ -483,19 +498,19 @@ int main(void) {
                 teapot.Draw(channelTextureBlend);
 
 
-                glDepthFunc(GL_LEQUAL);
+                /**glDepthFunc(GL_LEQUAL);
                 skybox.use();
                 skybox.setMat4("view", viewMatrix);
-                skybox.setMat4("projection", projMatrix);
+                skybox.setMat4("projection", camParams.projMatrix);
 
                 glBindVertexArray(skyboxVAO);
-                glActiveTexture(GL_TEXTURE0);
+                glActiveTexture(GL_TEXTURE6);
 
                 glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
                 glDrawArrays(GL_TRIANGLES, 0, 36);
 
                 glBindVertexArray(0);
-                glDepthFunc(GL_LESS); 
+                glDepthFunc(GL_LESS);*/
 
                 glfwSwapBuffers(window);
             }
