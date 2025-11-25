@@ -135,6 +135,8 @@
   <ItemGroup>
     <None Include="Shaders\colorchannelblend_fs.shader" />
     <None Include="Shaders\colorchannelblend_vs.shader" />
+    <None Include="Shaders\skybox_fs.shader" />
+    <None Include="Shaders\skybox_vs.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mesh.h" />

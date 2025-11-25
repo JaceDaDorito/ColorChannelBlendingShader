@@ -26,6 +26,12 @@
     <None Include="Shaders\colorchannelblend_vs.shader">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="Shaders\skybox_fs.shader">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\skybox_vs.shader">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h">

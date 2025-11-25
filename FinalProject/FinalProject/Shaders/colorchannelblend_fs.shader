@@ -22,25 +22,25 @@ uniform float diffuseThreshold;
 
 //RED CHANNEL
 uniform float redScale;
-uniform float redGloss;
+/*uniform float redGloss;
 uniform float redSpecularStrength;
-uniform float redSpecularExponent;
+uniform float redSpecularExponent;*/
 uniform sampler2D texRedDiffuse;
 uniform sampler2D texRedNormal;
 
 //GREEN CHANNEL
 uniform float greenScale;
-uniform float greenGloss;
+/*uniform float greenGloss;
 uniform float greenSpecularStrength;
-uniform float greenSpecularExponent;
+uniform float greenSpecularExponent;*/
 uniform sampler2D texGreenDiffuse;
 uniform sampler2D texGreenNormal;
 
 //BLUE CHANNEL
 uniform float blueScale;
-uniform float blueGloss;
+/*uniform float blueGloss;
 uniform float blueSpecularStrength;
-uniform float blueSpecularExponent;
+uniform float blueSpecularExponent;*/
 uniform sampler2D texBlueDiffuse;
 uniform sampler2D texBlueNormal;
 
@@ -78,7 +78,7 @@ void main () {
     blendedNormalTextureColor = mix(blendedNormalTextureColor, X_N, blendedValue.x);
     blendedNormalTextureColor = mix(blendedNormalTextureColor, Y_N, blendedValue.y);
 
-    float depth = 1;
+    /*float depth = 1;
     vec3 weights = blendedTextureColor;
     float map = max(max(weights.r, weights.g), weights.b) - depth;
     weights.r = max(weights.r - map, 0);
@@ -86,17 +86,17 @@ void main () {
     weights.b = max(weights.b - map, 0);
     weights = normalize(weights);
     weights = round(weights * 2) / 2;
-    weights = normalize(weights);
+    weights = normalize(weights);*/
 
 
-    vec3 specularStrengthVec = vec3(redSpecularStrength, greenSpecularStrength, blueSpecularStrength) * weights;
+    /*vec3 specularStrengthVec = vec3(redSpecularStrength, greenSpecularStrength, blueSpecularStrength) * weights;
     float specularStrength = specularStrengthVec.x + specularStrengthVec.y + specularStrengthVec.z;
 
     vec3 specularExponentVec = vec3(redSpecularExponent, greenSpecularExponent, blueSpecularExponent) * weights;
     float specularExponent = specularExponentVec.x + specularExponentVec.y + specularExponentVec.z;
 
     vec3 glossVec = vec3(redGloss, greenGloss, blueGloss) * weights;
-    float gloss = glossVec.x + glossVec.y + glossVec.z;
+    float gloss = glossVec.x + glossVec.y + glossVec.z;*/
 
     //If w = 0, its directional. If w = 1, its point.
     vec3 lightVector = normalize(tangentLightPos + w_pos.xyz);
@@ -106,10 +106,10 @@ void main () {
     vec3 H = normalize(lightVector + V);
 
     float lambertian = clamp(dot(lightVector, blendedNormalTextureColor), 0, 1);
-    specularExponent = pow(gloss * specularExponent, 2) + 1;
+    /*specularExponent = pow(gloss * specularExponent, 2) + 1;
     vec3 specularLight =  clamp(dot(H, blendedNormalTextureColor), 0, 1) * vec3(lambertian > 0, lambertian > 0, lambertian > 0);
     specularLight = vec3(pow(specularLight.x, specularExponent), pow(specularLight.y, specularExponent), pow(specularLight.z, specularExponent)) * gloss; //missing attenuation
-    specularLight = specularLight * specularStrength * lightColor;
+    specularLight = specularLight * specularStrength * lightColor;*/
    
 
 
